@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule 
+xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml" 
+xmlns="http://www.mulesoft.org/schema/mule/core" 
+xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:cxf="http://www.mulesoft.org/schema/mule/cxf" 
+xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:jersey="http://www.mulesoft.org/schema/mule/jersey" 
+xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper" 
+xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" 
+xmlns:vm="http://www.mulesoft.org/schema/mule/vm" 
+xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:jbossts="http://www.mulesoft.org/schema/mule/jbossts" 
+xmlns:jdbc-ee="http://www.mulesoft.org/schema/mule/ee/jdbc" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
+xmlns:core="http://www.mulesoft.org/schema/mule/core" xmlns:spring="http://www.springframework.org/schema/beans" 
+version="EE-3.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/cxf http://www.mulesoft.org/schema/mule/cxf/current/mule-cxf.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/jersey http://www.mulesoft.org/schema/mule/jersey/current/mule-jersey.xsd
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jbossts http://www.mulesoft.org/schema/mule/jbossts/current/mule-jbossts.xsd
+http://www.mulesoft.org/schema/mule/ee/jdbc http://www.mulesoft.org/schema/mule/ee/jdbc/current/mule-jdbc-ee.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/current/mule-xml.xsd">
+    <http:connector name="HttpConnector" doc:name="HTTP\HTTPS"/>
+    <jms:activemq-xa-connector name="Active_MQ" brokerURL="vm://localhost" validateConnections="true" doc:name="Active MQ"/>
+    <cxf:configuration initializeStaticBusInstance="false" doc:name="CXF Configuration" doc:description="Global CXF Configuration"/>
+    <data-mapper:config name="OrderItemToOrderRequest" transformationGraphPath="orderitemtoorderrequest_1.grf" doc:name="DataMapper"/>
+    <data-mapper:config name="OrderResponseToPurchaseReceipt" transformationGraphPath="orderresponsetopurchasereceipt.grf" doc:name="DataMapper"/>
+    <spring:beans>
+        <spring:bean id="Derby_Data_Source" class="org.enhydra.jdbc.standard.StandardXADataSource" destroy-method="shutdown">
+            <spring:property name="driverName" value="org.apache.derby.jdbc.EmbeddedDriver"/>
+            <spring:property name="url" value="jdbc:derby:muleEmbeddedDB;create=true"/>
+        </spring:bean>
+    </spring:beans>
+    <jdbc-ee:connector name="JDBCConnector" dataSource-ref="Derby_Data_Source" validateConnections="true" queryTimeout="-1" pollingFrequency="0" doc:name="Database"/>
+    <jbossts:transaction-manager doc:name="Transaction Manager">
+        <property key="com.arjuna.ats.arjuna.coordinator.defaultTimeout" value="600"/>
+        <property key="com.arjuna.ats.arjuna.coordinator.txReaperTimeout" value="1000000"/>
+    </jbossts:transaction-manager>
+    <ee:object-store-caching-strategy name="Caching_Strategy" keyGenerationExpression="#[payload.productId]" doc:name="Caching Strategy">
+        <in-memory-store/>
+    </ee:object-store-caching-strategy>
+    <mulexml:namespace-manager xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml" includeConfigNamespaces="true">  
+        <mulexml:namespace prefix="soap" uri="http://schemas.xmlsoap.org/soap/envelope/"/>  
+        <mulexml:namespace prefix="ord" uri="http://orders.se.mulesoft.com/"/> 
+    </mulexml:namespace-manager>
+    <flow name="orderService" doc:name="orderService">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="1080" path="orders" connector-ref="HttpConnector" doc:name="/orders" doc:description="Process HTTP reqests or responses."/>
+        <cxf:jaxws-service serviceClass="com.mulesoft.se.orders.IProcessOrder" doc:name="Order WebService" doc:description="Make a web service available via CXF"/>
+        <set-session-variable variableName="totalValue" value="0" doc:name="totalValue=0"/>
+        <foreach collection="#[payload.orderItems]" doc:name="For each Order Item">
+            <enricher target="#[rootMessage.payload.orderItems[counter - 1].purchaseReceipt]" doc:name="Enrich with purchase receipt">
+                <choice doc:name="Choice">
+                    <when expression="#[payload.manufacturer == 'Samsung']">
+                        <vm:outbound-endpoint exchange-pattern="request-response" path="samsungOrder" doc:name="Dispatch to samsungOrder"/>
+                    </when>
+                    <otherwise>
+                        <jms:outbound-endpoint exchange-pattern="request-response" queue="inhouseOrder" connector-ref="Active_MQ" doc:name="Dispatch to inhouseOrder"/>
+                    </otherwise>
+                </choice>
+            </enricher>
+            <logger message="receipt ok" level="INFO" doc:name="Logger"/>
+        </foreach>
+        <logger message="done processing. return #[payload]. message headers #[message.inboundProperties]" level="INFO" doc:name="Logger"/>
+        <vm:outbound-endpoint exchange-pattern="one-way" path="audit" responseTimeout="10000" mimeType="text/plain" doc:name="Dispatch to audit"/>
+        <catch-exception-strategy doc:name="Catch Exception Strategy">
+            <flow-ref name="defaultErrorHandler" doc:name="Invoke defaultErrorHandler"/>
+        </catch-exception-strategy>
+    </flow>
+    <flow name="samsungOrder" doc:name="samsungOrder">
+        <vm:inbound-endpoint exchange-pattern="request-response" path="samsungOrder" doc:name="samsungOrder"/>
+        <data-mapper:transform config-ref="OrderItemToOrderRequest" doc:name="OrderItem to OrderRequest"/>
+        <flow-ref name="samsungWebServiceClient" doc:name="Invoke Samsung WebService"/>
+        <logger message="samsung call http.status = #[message.inboundProperties['http.status']]" level="INFO" doc:name="Logger"/>
+        <message-filter throwOnUnaccepted="true" doc:name="Filter on 200 OK">
+            <message-property-filter pattern="http.status=200" caseSensitive="true" scope="inbound"/>
+        </message-filter>
+        <set-session-variable variableName="totalValue" value="#[totalValue + payload.price]" doc:name="totalValue += price"/>
+        <data-mapper:transform config-ref="OrderResponseToPurchaseReceipt" doc:name="OrderResponse to PurchaseReceipt"/>
+        <catch-exception-strategy doc:name="Catch Exception Strategy">
+            <logger message="rejected receipt" level="INFO" doc:name="Logger"/>
+            <scripting:transformer doc:name="Create REJECTED PurchaseReceipt">
+                <scripting:script engine="groovy">
+                    <scripting:text><![CDATA[def receipt = new com.mulesoft.se.orders.PurchaseReceipt(); 
+receipt.setStatus(com.mulesoft.se.orders.Status.REJECTED); receipt.setTotalPrice(0);
+return receipt;]]></scripting:text>
+                </scripting:script>
+            </scripting:transformer>
+        </catch-exception-strategy>
+    </flow>
+    <sub-flow name="samsungWebServiceClient" doc:name="samsungWebServiceClient">
+        <cxf:jaxws-client operation="purchase" clientClass="com.mulesoft.se.samsung.SamsungServiceService" port="SamsungServicePort" doc:name="Samsung Webservice Client"/>
+        <http:outbound-endpoint exchange-pattern="request-response" host="localhost" port="9090" path="samsung/orders" doc:name="/samsung/orders"/>
+    </sub-flow>
+    <flow name="inhouseOrder" doc:name="inhouseOrder">
+        <jms:inbound-endpoint queue="inhouseOrder" connector-ref="Active_MQ" doc:name="inhouseOrder">
+            <xa-transaction action="NONE"/>
+        </jms:inbound-endpoint>
+        <set-variable variableName="price" value="0" doc:name="Initialise Price"/>
+        <enricher target="#[price]" doc:name="Enrich with price">
+			<ee:cache cachingStrategy-ref="Caching_Strategy" doc:name="Cache the Price">
+				<http:outbound-endpoint exchange-pattern="request-response"
+					host="localhost" port="9999" path="api/prices/#[payload.productId]"
+					method="GET" disableTransportTransformer="true" doc:name="Invoke Price Service" />
+				<object-to-string-transformer doc:name="Object to String" />
+			</ee:cache>
+		</enricher>
+        
+        <jdbc-ee:outbound-endpoint exchange-pattern="one-way" queryKey="insertOrder" queryTimeout="-1" connector-ref="JDBCConnector" doc:name="Save Order Item">
+            <xa-transaction action="NONE"/>
+            <jdbc-ee:query key="insertOrder" value="insert into orders (product_id, name, manufacturer, quantity, price) values (#[payload.productId], #[payload.name], #[payload.manufacturer], #[payload.quantity], #[price])"/>
+        </jdbc-ee:outbound-endpoint>
+        <set-variable variableName="totalPrice" value="#[price * payload.quantity]" doc:name="totalPrice = price * payload.quantity"/>
+        <set-session-variable variableName="totalValue" value="#[totalValue + totalPrice]" doc:name="totalValue += totalPrice"/>
+        <scripting:transformer doc:name="Groovy">
+            <scripting:script engine="Groovy">
+                <scripting:text><![CDATA[receipt = new com.mulesoft.se.orders.PurchaseReceipt(); receipt.setStatus(com.mulesoft.se.orders.Status.ACCEPTED); receipt.setTotalPrice(Float.valueOf(message.getInvocationProperty('totalPrice'))); 
+return receipt;]]></scripting:text>
+            </scripting:script>
+        </scripting:transformer>
+        <rollback-exception-strategy maxRedeliveryAttempts="3" doc:name="Rollback Exception Strategy">
+            <logger message="#[payload:]" level="INFO" doc:name="Logger"/>
+            <on-redelivery-attempts-exceeded doc:name="Redelivery exhausted">
+                <flow-ref name="defaultErrorHandler" doc:name="Invoke defaultErrorHandler"/>
+            </on-redelivery-attempts-exceeded>
+        </rollback-exception-strategy>
+    </flow>
+    <flow name="auditService" doc:name="auditService">
+        <vm:inbound-endpoint exchange-pattern="one-way" path="audit" responseTimeout="10000" mimeType="text/plain" doc:name="audit">
+            <xa-transaction action="NONE"/>
+        </vm:inbound-endpoint>
+        <jdbc-ee:outbound-endpoint exchange-pattern="one-way" queryKey="insertOrderSummary" responseTimeout="10000" mimeType="text/plain" queryTimeout="-1" connector-ref="JDBCConnector" doc:name="Save OrderSummary">
+            <xa-transaction action="NONE"/>
+            <jdbc-ee:query key="insertOrderSummary" value="insert into order_audits values(default, #[payload.orderId], #[totalValue])"/>
+        </jdbc-ee:outbound-endpoint>
+        <choice-exception-strategy doc:name="Choice Exception Strategy">
+            <rollback-exception-strategy when="#[sessionVars['totalValue'] &gt; 5000" doc:name="Rollback Exception Strategy"/>
+            <catch-exception-strategy doc:name="Catch Exception Strategy">
+                <flow-ref name="defaultErrorHandler" doc:name="Invoke defaultErrorHandler"/>
+            </catch-exception-strategy>
+        </choice-exception-strategy>
+    </flow>
+    <flow name="priceService" doc:name="priceService">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="9999" path="api" connector-ref="HttpConnector" doc:name="/prices"/>
+        <jersey:resources doc:name="Price Service">
+            <component class="com.mulesoft.se.orders.ProductPrice"/>
+        </jersey:resources>
+    </flow>
+    <flow name="samsungService" doc:name="samsungService">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="9090" path="samsung/orders" connector-ref="HttpConnector" doc:name="/samsung/orders" doc:description="Process HTTP reqests or responses."/>
+        <cxf:jaxws-service serviceClass="com.mulesoft.se.samsung.SamsungService" doc:name="Order WebService" doc:description="Make a web service available via CXF"/>
+        <component class="com.mulesoft.se.samsung.SamsungServiceImpl" doc:name="Samsung Service Impl"/>
+    </flow>
+    <sub-flow name="defaultErrorHandler" doc:name="defaultErrorHandler">
+        <logger message="Error occurred: #[payload]" level="INFO" doc:name="Log Error"/>
+    </sub-flow>
+    <flow name="databaseInitialisation" doc:name="databaseInitialisation">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8091" path="populate" connector-ref="HttpConnector" doc:name="HTTP"/>
+        <scripting:component doc:name="Create Tables">
+            <scripting:script engine="Groovy">
+                <scripting:text><![CDATA[jdbcConnector = muleContext.getRegistry().lookupConnector("JDBCConnector");
+qr = jdbcConnector.getQueryRunner();
+conn = jdbcConnector.getConnection();
+qr.update(conn, "CREATE TABLE orders (i int generated always as identity, product_id varchar(256), name varchar(256), manufacturer varchar(256), quantity integer, price integer)");
+qr.update(conn, "CREATE TABLE order_audits (i int generated always as identity, order_id varchar(256), total_value integer)");
+return "db populated";]]></scripting:text>
+            </scripting:script>
+        </scripting:component>
+        <catch-exception-strategy doc:name="Catch Exception Strategy">
+            <set-payload value="table already populated" doc:name="'table already populated'"/>
+        </catch-exception-strategy>
+    </flow>
+</mule>

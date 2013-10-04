@@ -1,0 +1,69 @@
+{
+  "name" : "Order schema",
+  "type" : "object",
+  "properties": {
+    "orderId" : {
+      "type": "string",
+      "required": true
+    },
+    "customer": {
+      "required": true,
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "description": "The first name of the customer",
+          "required": true,
+          "type": "string"
+        }, 
+        "lastName": {
+          "description": "The last name of the customer",
+          "required": true,
+          "type": "string"
+        }, 
+        "address": {
+          "description": "The address of the customer",
+          "required": true,
+          "type": "string"
+        }
+      }
+    },
+    "orderItems" : {
+      "required": true, 
+      "type": "array",
+      "items": {
+        "description": "items to be added to the order",
+        "required": true,
+        "type": "object" ,
+        "properties": {
+          "item": {
+            "description": "item to be added to the order",
+            "required": true,
+            "type": "object" ,
+            "properties": {
+              "manufacturer": {
+                "description": "The id of the manufacturer",
+                "required": true,
+                "type": "string"
+              },
+              "name": {
+                "description": "The product namer",
+                "required": true,
+                "type": "string"
+              },
+              "productId": {
+                "description": "The product id (from manufacturer's product catalog)",
+                "required": true,
+                "type": "string"
+              },
+              "quantity": {
+                "description": "The quantity",
+                "required": true,
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

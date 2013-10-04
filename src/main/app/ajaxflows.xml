@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ajax="http://www.mulesoft.org/schema/mule/ajax" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:core="http://www.mulesoft.org/schema/mule/core" version="EE-3.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ajax http://www.mulesoft.org/schema/mule/ajax/current/mule-ajax.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+    <ajax:connector name="ajaxServer" serverUrl="http://localhost:8090/orders" resourceBase="${app.home}/docroot" doc:name="Ajax"/>
+    <flow name="orderProxy" doc:name="orderProxy" doc:description="Proxy for the orders webservice">
+        <ajax:inbound-endpoint channel="/orders/soap" responseTimeout="10000" connector-ref="ajaxServer" doc:name="/orders/soap"/>
+        <logger message="call orderservice with #[payload]" level="INFO" doc:name="Logger"/>
+        <http:outbound-endpoint exchange-pattern="request-response" host="localhost" port="1080" path="orders" method="POST" doc:name="/orders"/>
+        <logger message="response from order service was #[payload]" level="INFO" doc:name="Logger"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+    </flow>
+    <flow name="proxyToOrdersRestService" doc:name="proxyToOrdersRestService" doc:description="Proxy for the orders rest service published by apikit">
+        <ajax:inbound-endpoint channel="/orders/request" responseTimeout="10000" connector-ref="ajaxServer" doc:name="/orders/request"/>
+        <set-property propertyName="Accept" value="application/json" doc:name="Property"/>
+        <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+        <http:outbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" path="api/orders" method="POST" doc:name="api/orders"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+    </flow>
+    <flow name="proxyToManufacturersRestService" doc:name="proxyToManufacturersRestService" doc:description="Proxy for the manufacturers rest service published by apikit">
+        <ajax:inbound-endpoint channel="/manufacturers" responseTimeout="10000" connector-ref="ajaxServer" doc:name="/manufacturers"/>
+        <set-property propertyName="Accept" value="application/json" doc:name="Property"/>
+        <http:outbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" path="api/manufacturers" method="GET" doc:name="/api/manufacturers"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+    </flow>
+    <flow name="proxyToProductCatalogRestService" doc:name="proxyToProductCatalogRestService" doc:description="Proxy for the product catalog rest service published by apikit">
+        <ajax:inbound-endpoint channel="/products" responseTimeout="10000" connector-ref="ajaxServer" doc:name="/products"/>
+        <set-property propertyName="Accept" value="application/json" doc:name="Property"/>
+        <http:outbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" path="api/products" method="GET" doc:name="/api/products"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+    </flow>
+</mule>

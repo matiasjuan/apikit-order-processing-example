@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule 
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 
+	xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:ajax="http://www.mulesoft.org/schema/mule/ajax"
+	xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml"
+	xmlns="http://www.mulesoft.org/schema/mule/core" 
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" 
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" 
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ajax http://www.mulesoft.org/schema/mule/ajax/current/mule-ajax.xsd
+http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/current/mule-xml.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd" 
+version="EE-3.4.1">
+    
+       
+    <apikit:mapping-exception-strategy name="Global_Mapping_Exception_Strategy">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-payload value="resource not found" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-payload value="method not allowed" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-payload value="unsupported media type" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-payload value="not acceptable" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-payload value="bad request, something is wrong" />
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+
+    <apikit:config name="ordersApi" raml="orders.yaml" consoleEnabled="true" consolePath="console" doc:name="Router"/>
+	
+	<data-mapper:config name="JsonToXml"
+		transformationGraphPath="json_to_xml.grf" doc:name="DataMapper" />
+	
+	<data-mapper:config name="orderSummaryToJson"
+		transformationGraphPath="ordersummarytojson_1.grf" doc:name="DataMapper" />
+		
+    <flow name="main" doc:name="main">
+        <http:inbound-endpoint port="8081" host="localhost" path="api" doc:name="HTTP" exchange-pattern="request-response" >
+        	<object-to-string-transformer/>
+        </http:inbound-endpoint>
+
+        <apikit:router config-ref="ordersApi" doc:name="APIKit Router"/>
+        <logger message="message #[payload]" level="INFO" doc:name="Logger"/>
+        <exception-strategy ref="Global_Mapping_Exception_Strategy" doc:name="Reference Exception Strategy" />
+    </flow>
+    <flow name="get:/manufacturers" doc:name="get:/manufacturers">
+		<expression-transformer
+			expression="[&quot;Samsung&quot;,&quot;Philips&quot;,&quot;Sony&quot;, &quot;Grundig&quot;, &quot;GE&quot;]"
+			doc:name="Create Manufacturers" />
+	</flow>
+	
+	<flow name="get:/products" doc:name="get:/products">
+        <set-payload value="[ 
+  { &quot;ean13&quot;: &quot;7501031311309&quot;, &quot;name&quot;: &quot;Samsung Galaxy Tab 10.1 wifi&quot; }, 
+  { &quot;ean13&quot;: &quot;7501031314409&quot;, &quot;name&quot;: &quot;Samsung Galaxy Tab 2 10.1 wifi&quot; }, 
+  { &quot;ean13&quot;: &quot;7501022314309&quot;, &quot;name&quot;: &quot;Sony 40 Class Bravia Full HD 1080p LCD&quot; }, 
+  { &quot;ean13&quot;:  &quot;7501022318909&quot;, &quot;name&quot;: &quot;Sony 32 Class Bravia HDTV LCD&quot; }
+]" doc:name="Create products"/>
+	</flow>
+	
+	<flow name="post:/orders" doc:name="post:/orders">
+		<json:json-to-object-transformer doc:name="JSON to Object"/>
+
+		<data-mapper:transform config-ref="JsonToXml"
+			doc:name="DataMapper" />
+			
+		<object-to-string-transformer doc:name="Object to String" />
+		
+		<mulexml:xslt-transformer
+			maxIdleTransformers="2" maxActiveTransformers="5" xsl-file="XmlToSoapEnvelope.xsl"
+			doc:name="Xml to Soap Envelope" />
+			
+		<object-to-string-transformer doc:name="Object to String" />
+        
+        <http:outbound-endpoint exchange-pattern="request-response" host="localhost" port="1080" path="orders" doc:name="/orders"/>
+        
+			
+		<mulexml:dom-to-xml-transformer returnClass="java.lang.String"></mulexml:dom-to-xml-transformer>
+		
+		<mulexml:xslt-transformer
+			maxIdleTransformers="2" maxActiveTransformers="5"
+			xsl-file="SoapEnvelopeToBodyChild.xslt" doc:name="Xml to Soap Envelope" />
+			
+		<object-to-string-transformer doc:name="Object to String" />
+		
+		<data-mapper:transform config-ref="orderSummaryToJson"
+			doc:name="Data-mapper" />
+			
+		<object-to-string-transformer doc:name="Object to String" />
+			
+		
+	</flow>
+    
+ </mule>

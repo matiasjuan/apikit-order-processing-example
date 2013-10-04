@@ -1,0 +1,27 @@
+  {
+    "orderId": "XP-2344",
+    "customer": {
+      "firstName": "Matias",
+      "lastName": "Juan", 
+      "address": "21 Jump Street, BA, ARG"
+    },
+    "orderItems": [
+      {
+      	"item": {
+	        "manufacturer": "Samsung" ,
+	        "name": "Samsung Galaxy Tab 10.1 wifi" ,
+	        "productId": "p7510" ,
+	        "quantity": "3"
+        }
+      },
+      {
+      	"item": {
+	        "manufacturer": "Sony",
+	        "name": "Sony 40 Class Bravia Full HD 1080p LCD HDTV w/ Digital Tuner, KDL-40S4100 - Energy Star Compliant",
+	        "productId": "9252004",
+	        "quantity": "2"
+        } 
+      }
+    ]
+  }
+  

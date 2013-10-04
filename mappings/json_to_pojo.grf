@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="matiasjuan" created="Sun Jul 21 22:09:14 GMT-03:00 2013" guiVersion="3.4.0.P" id="1374458463003" licenseCode="Unlicensed" licenseType="Unknown" modified="Sun Jul 21 22:09:14 GMT-03:00 2013" modifiedBy="matiasjuan" name="json_to_pojo_grf" preview-file="${Project_Home}/src/main/api/order.example.json" revision="1.0" showComponentDetails="false">
+<Global>
+<Metadata __index="0" __referenceCounter="1" __sourcePath="{}/object" _dataStructure="OBJECT" _id="__id" _type="Input" id="701ee4a5-0a08-4413-9e88-8cbf4e2f8cf7">
+<Record fieldDelimiter="|" name="object" recordDelimiter="\n\\|\r\n\\|\r" type="delimited">
+<Field __artificialType="_id" __systemManaged="true" label="__id" name="__id" type="string"/>
+<Field __sourcePath="{}/object/orderId" containerType="SINGLE" label="orderId" name="orderId" type="string"/>
+<Field __sourcePath="{}/object/customer/firstName" containerType="SINGLE" label="firstName" name="firstName" type="string"/>
+<Field __sourcePath="{}/object/customer/lastName" containerType="SINGLE" label="lastName" name="lastName" type="string"/>
+<Field __sourcePath="{}/object/customer/address" containerType="SINGLE" label="address" name="address" type="string"/>
+</Record>
+</Metadata>
+<Metadata __index="0" __referenceCounter="1" __sourcePath="{}/object" _dataStructure="OBJECT" _id="__id" _type="Output" id="9991b007-78f6-42db-b53e-e13eb6c4fa4d">
+<Record fieldDelimiter="|" name="Order" recordDelimiter="\n\\|\r\n\\|\r" type="delimited">
+<Field __artificialType="_id" __systemManaged="true" name="__id" type="string"/>
+<Field __index="0" __sourcePath="{}/object/customer/address" containerType="SINGLE" label="address" name="address" type="string"/>
+<Field __index="1" __sourcePath="{}/object/customer/firstName" containerType="SINGLE" label="firstName" name="firstName" type="string"/>
+<Field __index="2" __sourcePath="{}/object/customer/lastName" containerType="SINGLE" label="lastName" name="lastName" type="string"/>
+<Field __index="3" __sourcePath="{}/object/orderId" containerType="SINGLE" label="orderId" name="orderId" type="string"/>
+</Record>
+</Metadata>
+<Metadata __index="0" __referenceCounter="1" __sourcePath="{}/object/orderItems" _dataStructure="SINGLE_DIMENSIONAL_COLLECTION" _id="__id" _metadataParentId="701ee4a5-0a08-4413-9e88-8cbf4e2f8cf7" _parent_id="__parent_id" _type="Input" id="ca346088-bb13-41c4-a9cd-c7b876c10956">
+<Record fieldDelimiter="|" name="orderItems" recordDelimiter="\n\\|\r\n\\|\r" type="delimited">
+<Field __artificialType="_parent_id" __systemManaged="true" label="__parent_id" name="__parent_id" type="string"/>
+<Field __artificialType="_id" __systemManaged="true" label="__id" name="__id" type="string"/>
+<Field __sourcePath="{}/object/orderItems/item/manufacturer" containerType="SINGLE" label="manufacturer" name="manufacturer" type="string"/>
+<Field __sourcePath="{}/object/orderItems/item/name" containerType="SINGLE" label="name" name="name" type="string"/>
+<Field __sourcePath="{}/object/orderItems/item/productId" containerType="SINGLE" label="productId" name="productId" type="string"/>
+<Field __sourcePath="{}/object/orderItems/item/quantity" containerType="SINGLE" label="quantity" name="quantity" type="number"/>
+</Record>
+</Metadata>
+<Metadata __index="4" __referenceCounter="1" __sourcePath="{}/object/orderItems" _dataStructure="SINGLE_DIMENSIONAL_COLLECTION" _id="__id" _metadataParentId="9991b007-78f6-42db-b53e-e13eb6c4fa4d" _parent_id="__parent_id" _type="Output" id="6af66f05-a540-4aac-8b0e-9de6413564d4">
+<Record fieldDelimiter="|" name="orderItems" recordDelimiter="\n\\|\r\n\\|\r" type="delimited">
+<Field __artificialType="_parent_id" __systemManaged="true" name="__parent_id" type="string"/>
+<Field __artificialType="_id" __systemManaged="true" name="__id" type="string"/>
+<Field __index="4" __sourcePath="{}/object/orderItems/manufacturer" containerType="SINGLE" label="manufacturer" name="manufacturer" type="string"/>
+<Field __index="5" __sourcePath="{}/object/orderItems/name" containerType="SINGLE" label="name" name="name" type="string"/>
+<Field __index="6" __sourcePath="{}/object/orderItems/productId" containerType="SINGLE" label="productId" name="productId" type="string"/>
+<Field __index="7" __sourcePath="{}/object/orderItems/purchaseReceipt/id" containerType="SINGLE" label="id" name="id" type="string"/>
+<Field __index="8" __sourcePath="{}/object/orderItems/purchaseReceipt/status" containerType="SINGLE" label="status" name="status" type="string"/>
+<Field __index="9" __sourcePath="{}/object/orderItems/purchaseReceipt/totalPrice" containerType="SINGLE" label="totalPrice" name="totalPrice" type="number"/>
+<Field __index="10" __sourcePath="{}/object/orderItems/quantity" containerType="SINGLE" label="quantity" name="quantity" type="integer"/>
+</Record>
+</Metadata>
+<Dictionary>
+<Entry id="DictionaryEntry0" input="true" name="inputPayload" output="false" type="object"/>
+<Entry id="DictionaryEntry1" input="false" name="outputPayload" output="true" type="object"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node enabled="enabled" fileURL="dict:outputPayload" guiName="Pojo WRITER" guiX="900" guiY="20" id="BEAN_WRITER0" type="BEAN_WRITER">
+<attr name="mapping"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<object xmlns:clover="http://www.cloveretl.com/ns/xmlmapping" clover:inPort="0">
+  <customer>
+    <address>$0.address</address>
+    <firstName>$0.firstName</firstName>
+    <lastName>$0.lastName</lastName>
+  </customer>
+  <orderId>$0.orderId</orderId>
+  <clover:collection clover:name="orderItems">
+    <item clover:inPort="1" clover:key="__parent_id" clover:parentKey="__id">
+      <manufacturer>$1.manufacturer</manufacturer>
+      <name>$1.name</name>
+      <productId>$1.productId</productId>
+      <purchaseReceipt>
+        <id>$1.id</id>
+        <status>$1.status</status>
+        <totalPrice>$1.totalPrice</totalPrice>
+      </purchaseReceipt>
+      <quantity>$1.quantity</quantity>
+    </item>
+  </clover:collection>
+</object>]]></attr>
+<attr name="_data_format"><![CDATA[JAVA]]></attr>
+<attr name="schema"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<schema-object>
+  <typed-object-ref type-ref="com.mulesoft.se.orders.Order"/>
+  <typed-object type="int"/>
+  <typed-object type="com.mulesoft.se.orders.PurchaseReceipt">
+    <typed-object-ref name="id" type-ref="java.lang.String"/>
+    <typed-object-ref name="status" type-ref="com.mulesoft.se.orders.Status"/>
+    <typed-object-ref name="totalPrice" type-ref="float"/>
+  </typed-object>
+  <typed-object type="java.lang.String"/>
+  <typed-object type="com.mulesoft.se.orders.OrderPerson">
+    <typed-object-ref name="address" type-ref="java.lang.String"/>
+    <typed-object-ref name="firstName" type-ref="java.lang.String"/>
+    <typed-object-ref name="lastName" type-ref="java.lang.String"/>
+  </typed-object>
+  <typed-object type="com.mulesoft.se.orders.Order">
+    <typed-object-ref name="customer" type-ref="com.mulesoft.se.orders.OrderPerson"/>
+    <typed-object-ref name="orderId" type-ref="java.lang.String"/>
+    <schema-collection name="orderItems" type="java.util.List">
+      <typed-object-ref type-ref="com.mulesoft.se.orders.OrderItem"/>
+    </schema-collection>
+  </typed-object>
+  <typed-object type="float"/>
+  <typed-object type="com.mulesoft.se.orders.OrderItem">
+    <typed-object-ref name="manufacturer" type-ref="java.lang.String"/>
+    <typed-object-ref name="name" type-ref="java.lang.String"/>
+    <typed-object-ref name="productId" type-ref="java.lang.String"/>
+    <typed-object-ref name="purchaseReceipt" type-ref="com.mulesoft.se.orders.PurchaseReceipt"/>
+    <typed-object-ref name="quantity" type-ref="int"/>
+  </typed-object>
+  <typed-object type="com.mulesoft.se.orders.Status"/>
+</schema-object>
+]]></attr>
+</Node>
+<Node enabled="enabled" guiName="Foreach 'object' -&gt; 'object'" guiX="460" guiY="20" id="FOREACH_OBJECT_OBJECT" transformClass="com.mulesoft.datamapper.transform.MelRecordTransform" type="REFORMAT">
+<attr name="melScript"><![CDATA[//MEL
+//START -> DO NOT REMOVE
+output.__id = input.__id;
+//END -> DO NOT REMOVE
+output.orderId = input.orderId;
+output.firstName = input.firstName;
+output.lastName = input.lastName;
+output.address = input.address;
+]]></attr>
+</Node>
+<Node enabled="enabled" guiName="Foreach 'orderItems' -&gt; 'orderItems'" guiX="460" guiY="120" id="FOREACH_ORDER_ITEMS_ORDER_ITEMS" transformClass="com.mulesoft.datamapper.transform.MelRecordTransform" type="REFORMAT">
+<attr name="melScript"><![CDATA[//MEL
+//START -> DO NOT REMOVE
+output.__id = input.__id;
+output.__parent_id = input.__parent_id;
+//END -> DO NOT REMOVE
+output.manufacturer = input.manufacturer;
+output.name = input.name;
+output.productId = input.productId;
+output.quantity = (isnull(input.quantity) ? null : double2integer(input.quantity));
+]]></attr>
+</Node>
+<Node charset="UTF-8" enabled="enabled" fileURL="dict:inputPayload" guiName="JSON READER" guiX="20" guiY="20" id="JSON_READER0" type="JSON_READER">
+<attr name="mapping"><![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Context xpath="/root">
+  <Context outPort="0" sequenceField="__id" xpath="object">
+    <Mapping cloverField="orderId" trim="true" xpath="orderId"/>
+    <Mapping cloverField="firstName" trim="true" xpath="customer/firstName"/>
+    <Mapping cloverField="lastName" trim="true" xpath="customer/lastName"/>
+    <Mapping cloverField="address" trim="true" xpath="customer/address"/>
+    <Context generatedKey="__parent_id" outPort="1" parentKey="__id" sequenceField="__id" xpath="orderItems">
+      <Mapping cloverField="manufacturer" trim="true" xpath="item/manufacturer"/>
+      <Mapping cloverField="name" trim="true" xpath="item/name"/>
+      <Mapping cloverField="productId" trim="true" xpath="item/productId"/>
+      <Mapping cloverField="quantity" trim="true" xpath="item/quantity"/>
+    </Context>
+  </Context>
+</Context>
+]]></attr>
+<attr name="_data_format"><![CDATA[JSON]]></attr>
+<attr name="jsonSchemaURL"><![CDATA[./src/main/api/order.example.json]]></attr>
+</Node>
+<Edge debugMode="true" fromNode="FOREACH_OBJECT_OBJECT:0" guiBendpoints="" id="Edge1" inPort="Port 0 (in)" metadata="9991b007-78f6-42db-b53e-e13eb6c4fa4d" outPort="Port 0 (out)" toNode="BEAN_WRITER0:0"/>
+<Edge debugMode="true" fromNode="FOREACH_ORDER_ITEMS_ORDER_ITEMS:0" guiBendpoints="" id="Edge3" inPort="Port 1 (in)" metadata="6af66f05-a540-4aac-8b0e-9de6413564d4" outPort="Port 0 (out)" toNode="BEAN_WRITER0:1"/>
+<Edge debugMode="true" fromNode="JSON_READER0:0" guiBendpoints="" id="Edge0" inPort="Port 0 (in)" metadata="701ee4a5-0a08-4413-9e88-8cbf4e2f8cf7" outPort="Port 0 (out)" toNode="FOREACH_OBJECT_OBJECT:0"/>
+<Edge debugMode="true" fromNode="JSON_READER0:1" guiBendpoints="" id="Edge2" inPort="Port 0 (in)" metadata="ca346088-bb13-41c4-a9cd-c7b876c10956" outPort="Port 1 (out)" toNode="FOREACH_ORDER_ITEMS_ORDER_ITEMS:0"/>
+</Phase>
+</Graph>
