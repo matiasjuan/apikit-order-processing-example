@@ -15,27 +15,27 @@ baseUri: http://localhost/api/{version}/
     responses:
       201: 
         body:
-          application/json:
-            schema: |
-              {
-                "description": "operation result",
-                "type": "object",
-                "properties" : {
-                  "message" : {
-                    "type":  "string",
-                    "description": "the message that describes the opertion result"
-                  },
-                  "succesful": {
-                    "type": "string",
-                    "description": "describes the operation result status (succesful, failure)"
-                  }
-                }
-              }
-            example: |
-              {
-                "message": "Operation succesful",
-                "status": "succesful" 
-              }
+          application/json: !!null
+        #     schema: |
+        #       {
+        #         "description": "operation result",
+        #         "type": "object",
+        #         "properties" : {
+        #           "message" : {
+        #             "type":  "string",
+        #             "description": "the message that describes the opertion result"
+        #           },
+        #           "succesful": {
+        #             "type": "string",
+        #             "description": "describes the operation result status (succesful, failure)"
+        #           }
+        #         }
+        #       }
+        #     example: |
+        #       {
+        #         "message": "Operation succesful",
+        #         "status": "succesful" 
+        #       }
 
 /manufacturers:
   displayName: Manufacturers service
