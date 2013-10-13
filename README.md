@@ -2,32 +2,29 @@ Service orchestation and choice routing example
 ===============================================
 This example includes APIKIT as a front end for the orders services.
 
-<ul>added
-		<li>fulfillment: added apikit as a rest frontend and the apikit console</li>	
-		<li>manufacturers are loaded from the manufacturers rest service</li>
-		<li>product names are loaded from the product catalog rest service</li>
-		<li>tab to write json request</li>
-</ul>
+added
+*   fulfillment: added apikit as a rest frontend and the apikit console
+*   manufacturers are loaded from the manufacturers rest service
+*   product names are loaded from the product catalog rest service
+*   tab to write json request
 
 
-<ul>mule mflows
-		<li>ajaxflows: contains ajax inbounds for the order website. also publishes order website.</li>
-		<li>mule-config: contains the apikit frontend</li>
-		<li>fulfillment: orders processing service</li>	
-</ul>
+
+mule mflows
+*   ajaxflows: contains ajax inbounds for the order website. also publishes order website.
+*   mule-config: contains the apikit frontend
+*   fulfillment: orders processing service
 
 
-<ul>urls
-		<li>populate DB: http://localhost:8091/populate</li>
-		<li>APIKit Console: http://localhost:8081/api/console/</li>
-		<li>Orders website: http://localhost:8090/orders/</li>
-</ul>
 
-<ul>apikit config
-		<li>main flow in mule-config.mflow</li>
-		<li>apikit files: src/main/api</li>
-</ul>
+urls
+*   populate DB: http://localhost:8091/populate
+*   APIKit Console: http://localhost:8081/api/console/
+*   Orders website: http://localhost:8090/orders/
 
+apikit config
+*   main flow in mule-config.mflow
+*   apikit files: src/main/api
 
 
 
